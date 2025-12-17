@@ -8,19 +8,19 @@ if [ "${EUID:-$(id -u)}" -ne 0 ]; then
 fi
 
 # 1. 在 /root 目录创建 tcp.sh
-echo -e "\033[1;34m[1/4] 创建 /root/tcp.sh...\033[0m"
+echo -e "\033[1;34m[1/5] 创建 /root/tcp.sh...\033[0m"
 touch /root/tcp.sh
 
 # 2. 赋予执行权限
-echo -e "\033[1;34m[2/4] 设置执行权限...\033[0m"
+echo -e "\033[1;34m[2/5] 设置执行权限...\033[0m"
 chmod +x /root/tcp.sh
 
 # 3. 去除可能的 Windows 换行符
-echo -e "\033[1;34m[3/4] 处理换行符格式...\033[0m"
+echo -e "\033[1;34m[3/5] 处理换行符格式...\033[0m"
 sed -i 's/\r$//' /root/tcp.sh 2>/dev/null || true
 
 # 4. 写入 tcp 优化脚本内容
-echo -e "\033[1;34m[4/4] 写入脚本内容...\033[0m"
+echo -e "\033[1;34m[4/5] 写入脚本内容...\033[0m"
 cat > /root/tcp.sh << 'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -281,5 +281,13 @@ note "复核：查看加载顺序及最终值来源（只读）"
 sysctl --system 2>&1 | grep -nE --color=never 'Applying|net\.core\.(rmem|wmem)|net\.core\.default_qdisc|net\.ipv4\.tcp_(rmem|wmem)|tcp_congestion_control' || true
 EOF
 
-echo -e "\033[1;32m[完成] tcp.sh 已部署至 /root/tcp.sh\033[0m"
-echo -e "可执行以下命令运行 TCP 优化脚本：\n/root/tcp.sh"
+# 5. 新增：自动执行 /root/tcp.sh 并反馈执行结果
+echo -e "\033[1;34m[5/5] 正在执行 TCP 优化脚本 /root/tcp.sh...\033[0m"
+if /root/tcp.sh; then
+    echo -e "\033[1;32m[成功] TCP 优化脚本执行完成！\033[0m"
+else
+    echo -e "\033[1;31m[失败] TCP 优化脚本执行出错，请检查上述输出排查问题\033[0m"
+    exit 1  # 执行失败时部署脚本也退出，便于排查
+fi
+
+echo -e "\033[1;32m[全部完成] tcp.sh 已部署并执行完毕\033[0m"
